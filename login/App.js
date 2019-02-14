@@ -16,7 +16,7 @@ const Telas = createStackNavigator({
   initialRouteName: 'Login',
 });
 
-//AppRegistry.registerComponent('login', () => Telas);
+console.disableYellowBox = true;
 
 export default createAppContainer(Telas);
 

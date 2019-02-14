@@ -17,7 +17,7 @@ export default class SingUp extends React.Component {
     
     constructor(props) {
         super(props);
-        state = {
+        this.state = {
             name: '',
             username: '',
             password: '',
@@ -68,6 +68,19 @@ export default class SingUp extends React.Component {
     };
 
     signup = () => {
+        if(this.state.name == ''){
+            alert('Preencha o campo de nome');
+            return;
+        } else if(this.state.username == ''){
+            alert('Prencha o campo de usuário');
+            return;
+        } else if (this.state.email == ''){
+            alert('Prencha o campo de email');
+            return;
+        } else if (this.state.password == ''){
+            alert('Prencha o campo de senha');
+            return;
+        }
 
         const data = {
             'nome': this.state.name,
@@ -78,12 +91,10 @@ export default class SingUp extends React.Component {
         api
             .post('cadastrar', data)
             .then(res => {
-                //console.warn(res);
-                //console.warn(res.data);
-
                 if(res.data.sucesso == 1){
                     alert('Cadastro efetuado com sucesso');
-                    this.props.navigation.navigate('Login');
+                    this.props.navigation.goBack();
+
                 } else if(res.data.sucesso == 2){
                     alert('Os campos não foram todos preenchidos');
                 } else if(res.data.sucesso == 3){

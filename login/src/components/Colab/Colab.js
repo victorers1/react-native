@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { StyleSheet, View, Text, FlatList} from 'react-native'
+import { StyleSheet, View, Text, FlatList, StatusBar} from 'react-native'
 import api from '../../services/api';
 
 export default class Colab extends Component {
@@ -25,18 +25,16 @@ export default class Colab extends Component {
     })
 
     componentDidMount() {
-        //this.setState(token, await AsyncStorage.getItem('@Home:token'));
         this.loadColab();
     }
 
-
+    //Carrega a lista de colaboradores em "colab: []"
     loadColab() {
         const data = {
             'username': this.props.navigation.state.params.username,
             'idempresa': this.props.navigation.state.params.enterprise.id_empresa,
             'token': this.props.navigation.state.params.token,
         }
-        //console.warn(data)
         api
             .post('colaboradores', data)
             .then(res => {

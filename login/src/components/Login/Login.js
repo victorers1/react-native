@@ -8,9 +8,9 @@ export default class Login extends React.Component {
     };
 
     async componentWillMount() { // Vê se já há um usuário logado
-        var logged = await AsyncStorage.getItem('@Home:logged');
-        if(logged == true) {  // Se já tem usuário logado
-            this.props.navigation.navigate('Home'); // Vai direto para Home
+        const log = await AsyncStorage.getItem('@Home:logged');
+        if(log == 'true') {  // Se já tem usuário logado
+            this.props.navigation.replace('Home'); // Vai direto para Home
         }
     }
     

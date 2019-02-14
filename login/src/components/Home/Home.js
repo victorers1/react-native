@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { StyleSheet, View, Text, FlatList, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Button, AsyncStorage, StatusBar } from 'react-native'
 import api from '../../services/api'
 
 export default class Home extends Component {
@@ -13,7 +13,7 @@ export default class Home extends Component {
     }
 
     static navigationOptions = ({ navigation }) => ({
-        title: 'Olá, ' + navigation.state.params.res[1],
+        title: 'Empresas',
         headerStyle: {
             backgroundColor: '#ef8c45',
         },
@@ -23,27 +23,39 @@ export default class Home extends Component {
         },
     })
 
-    componentDidMount() {
-        this.state.username = this.props.navigation.state.params.res[1];
-        this.state.token = this.props.navigation.state.params.res[2];
+    async componentDidMount() { //Carrega as variáveis de estado
+        this.setState({ username: await AsyncStorage.getItem('@Home:loggedUser'), token: await AsyncStorage.getItem('@Home:token') });
+        //this.state.username = await AsyncStorage.getItem('@Home:loggedUser');
+        //this.state.token = await AsyncStorage.getItem('@Home:token');
         this.loadEnterprises();
     }
 
+    //Carrega a lista de empresas na variável de estado "enterprises: []"
     loadEnterprises() {
-        //Primeiro manda os dados
-        //console.warn('postando:' + this.state.username + ' ' + this.state.token)
+        const data = {
+            'username': this.state.username,
+            'token': this.state.token,
+        }
         api
-            .post('empresas', { 'username': this.state.username, 'token': this.state.token })
-            .then(res => {  //Depois recebe as empresas
-                //console.warn('Dados recebidos: ' + res.data.empresas);
+            .post('empresas', data) //Primeiro manda os dados: 'username' e 'token'
+            .then(async res => {  //Depois recebe as empresas
                 if (res.data.validado == 1) {
                     this.setState({ enterprises: res.data.empresas });
-                    //console.warn('lista de empresas: ' + this.state.enterprises);
                 } else {
                     alert('Erro ao carregar empresas.');
-                    this.props.navigation.navigate('Login');
+                    await AsyncStorage.setItem('@Home:loggedUser', '');
+                    await AsyncStorage.setItem('@Home:token', '');
+                    await AsyncStorage.setItem('@Home:logged', 'false');
+                    this.props.navigation.replace('Login');
                 }
             })
+    }
+
+    logout = async () => {
+        await AsyncStorage.setItem('@Home:loggedUser', '');
+        await AsyncStorage.setItem('@Home:token', '');
+        await AsyncStorage.setItem('@Home:logged', 'false');
+        this.props.navigation.replace('Login');
     }
 
     renderItem = ({ item }) => (
@@ -61,6 +73,20 @@ export default class Home extends Component {
         </View>
     )
 
+    renderHeader = () => (
+        <View style={styles.lHeaderContainer} >
+            <Text style={styles.lHeaderText}>Olá, {this.state.username}</Text>
+        </View>
+    )
+
+    renderFooter = () => (
+        <TouchableOpacity
+            onPress={this.logout}
+            style={styles.accessButton} >
+
+            <Text style={styles.accessText}>Sair</Text>
+        </TouchableOpacity>
+    )
 
     render() {
         return (
@@ -69,7 +95,10 @@ export default class Home extends Component {
                     contentContainerStyle={styles.list}
                     data={this.state.enterprises}
                     keyExtractor={item => item.id_empresa.toString()}
-                    renderItem={this.renderItem} />
+                    renderItem={this.renderItem}
+                    ListHeaderComponent={this.renderHeader}
+                    ListFooterComponent={this.renderFooter}
+                />
             </View>
         );
     }
@@ -107,8 +136,6 @@ const styles = StyleSheet.create({
     accessButton: {
         height: 42,
         borderRadius: 5,
-        //borderWidth: 2,
-        //borderColor: '#DA552F',
         backgroundColor: '#ffac55',
         justifyContent: 'center',
         alignItems: 'center',
@@ -120,4 +147,23 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontWeight: 'bold',
     },
+    logoutButton: {
+        height: 42,
+        borderRadius: 5,
+        backgroundColor: '#ffac55',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 10,
+        elevation: 2,
+    },
+    lHeaderContainer: {
+        alignItems: 'center',
+        backgroundColor: '#fafafa',
+        marginBottom: 10,
+    },
+    lHeaderText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    }
 });

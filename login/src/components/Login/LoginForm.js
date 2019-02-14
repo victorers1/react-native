@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, AppRegistry, Text, AsyncStorage } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, AppRegistry, Text, AsyncStorage, StatusBar } from 'react-native';
 import api from '../../services/api'
 
 export default class LoginForm extends React.Component {
@@ -10,6 +10,32 @@ export default class LoginForm extends React.Component {
             password: '',
         }
     }
+
+    async componentDidMount() {
+        await AsyncStorage
+            .getItem('@Home:logged')
+            .then(async logged => {
+                if (logged == 'false') { // Já houve usuários logados, mas não há no momento
+                    await AsyncStorage.setItem('@Home:loggedUser', '');
+
+                } else if (logged == null) { //Nunca houve usuário logado
+                    await AsyncStorage.setItem('@Home:logged', 'false');
+
+                } else if (logged == 'true') { // Há um usuário logado no momento
+                    await AsyncStorage
+                        .getItem('@Home:loggedUser')
+                        .then(username => {
+                            if (username != '' && username != null) { // Testo se username existe mesmo só por precaução
+                                this.setState({ username: username }) // Recupero username
+                                this.props.navigation.replace('Home', {username: username});
+                            } else {
+                                alert('Alguém estava logado, mas não há nome de usuário salvo.');
+                            }
+                        });
+                }
+            });
+    }
+
     render() {
         return (
             <View style={styles.container}>
@@ -49,32 +75,17 @@ export default class LoginForm extends React.Component {
         api
             .post('login', data)
             .then(async res => { // res = resposta
-                //console.warn(res.data.sucesso[0]==1);
-
                 if (res.data.sucesso[0] == 1) {  // Sucesso no login
-                    await AsyncStorage.setItem('@Home:loggedUser', res.data.sucesso[1]); //Salva usuário logado
-                    await AsyncStorage.setItem('@Home:password', this.state.password);
-                    await AsyncStorage.setItem('@Home:token', res.data.sucesso[2]);  //Salva token
-                    //console.warn('Login realizado, user:' + await AsyncStorage.getItem('@Home:loggedUser')+ ', token: '+ await AsyncStorage.getItem('@Home:token'));
+                    await AsyncStorage.setItem('@Home:loggedUser', res.data.sucesso[1]);
+                    await AsyncStorage.setItem('@Home:token', res.data.sucesso[2]);
+                    await AsyncStorage.setItem('@Home:logged', 'true'); //variável indicando se há um usuário logado
 
-                    this.props.navigation.navigate('Home', {res: res.data.sucesso});  //Entra na página das empresas
-
+                    this.props.navigation.replace('Home', {username: this.state.username});  //Entra na página das empresas
                 } else if (res.data.sucesso[0] == 0) { //Fracasso no login
                     alert('Usuário ou senha incorretos');
                 }
             })
-            .catch(error => console.log(error));
-    }
-
-    async componentWillMount() {
-        AsyncStorage
-            .getItem('@Home:loggedUser')
-            .then(async username => {
-                if (username !== '' && username != null) {
-                    this.setState({username: username, password: await AsyncStorage.getItem('@Home:password')})
-                    this.login();
-                }
-            });
+            .catch(error => console.warn(error));
     }
 }
 
