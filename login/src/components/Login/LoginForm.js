@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, AppRegistry, Text, Button, AsyncStorage } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, AppRegistry, Text, AsyncStorage } from 'react-native';
 import api from '../../services/api'
 
 export default class LoginForm extends React.Component {
@@ -14,7 +14,8 @@ export default class LoginForm extends React.Component {
         return (
             <View style={styles.container}>
                 <TextInput
-                    placeholder='Usuário'
+                    placeholder='Nome de Usuário'
+                    value={this.state.username}
                     underlineColorAndroid='transparent'
                     style={styles.input}
                     onChangeText={(username) => this.setState({ username })} />
@@ -36,11 +37,6 @@ export default class LoginForm extends React.Component {
                     onPress={() => this.props.navigation.navigate('Signup')}>
                     <Text style={styles.textSignUp}>Cadastrar nova conta</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={() => this.props.navigation.navigate('Home')}>
-                    <Text style={styles.textSignUp}>Entrar como administrador</Text>
-                </TouchableOpacity>
             </View>
         )
     };
@@ -52,13 +48,17 @@ export default class LoginForm extends React.Component {
         }
         api
             .post('login', data)
-            .then(res => {
-                console.warn(res.data);
+            .then(async res => { // res = resposta
+                //console.warn(res.data.sucesso[0]==1);
 
                 if (res.data.sucesso[0] == 1) {  // Sucesso no login
-                    AsyncStorage.setItem('loggedUser', res.data.sucesso[1]); //Salva usuário logado
-                    AsyncStorage.setItem('token', res.data.sucesso[2]);  //Salva token
-                    this.props.navigation.navigate('Home');  //Entra na página das empresas
+                    await AsyncStorage.setItem('@Home:loggedUser', res.data.sucesso[1]); //Salva usuário logado
+                    await AsyncStorage.setItem('@Home:password', this.state.password);
+                    await AsyncStorage.setItem('@Home:token', res.data.sucesso[2]);  //Salva token
+                    //console.warn('Login realizado, user:' + await AsyncStorage.getItem('@Home:loggedUser')+ ', token: '+ await AsyncStorage.getItem('@Home:token'));
+
+                    this.props.navigation.navigate('Home', {res: res.data.sucesso});  //Entra na página das empresas
+
                 } else if (res.data.sucesso[0] == 0) { //Fracasso no login
                     alert('Usuário ou senha incorretos');
                 }
@@ -66,13 +66,13 @@ export default class LoginForm extends React.Component {
             .catch(error => console.log(error));
     }
 
-    componentDidMount() {
+    async componentWillMount() {
         AsyncStorage
-            .getItem('loggedUser')
-            .then(username => {
+            .getItem('@Home:loggedUser')
+            .then(async username => {
                 if (username !== '' && username != null) {
-                    //this.state.username = username;
-                    this.props.navigation.navigate('Home');
+                    this.setState({username: username, password: await AsyncStorage.getItem('@Home:password')})
+                    this.login();
                 }
             });
     }
@@ -98,12 +98,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#FFFFFF',
         fontWeight: '700',
+        elevation: 2,
     },
     textSignUp: {
         textAlign: 'left',
         color: 'rgba(255,255,255,0.7)',
         textDecorationLine: 'underline',
-
     },
 });
 

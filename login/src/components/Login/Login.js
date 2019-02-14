@@ -7,16 +7,13 @@ export default class Login extends React.Component {
         header: null,
     };
 
-    componentDidMount() {
-        this._loadInitialState().done();
-    }
-
-    _loadInitialState = async () => { //Esta função verificará se já tem um usuário logado no App
-        var value = await AsyncStorage.getItem('user');
-        if( value !== null) {
-            this.props.navigation.navigate('Inicio');
+    async componentWillMount() { // Vê se já há um usuário logado
+        var logged = await AsyncStorage.getItem('@Home:logged');
+        if(logged == true) {  // Se já tem usuário logado
+            this.props.navigation.navigate('Home'); // Vai direto para Home
         }
     }
+    
 
     render() {
         return (

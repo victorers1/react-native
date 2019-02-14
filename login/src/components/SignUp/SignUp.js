@@ -1,5 +1,5 @@
 import React from 'react'
-import { StyleSheet, View, Text, KeyboardAvoidingView, StatusBar, TouchableOpacity, TextInput } from 'react-native'
+import { StyleSheet, Text, KeyboardAvoidingView, TouchableOpacity, TextInput } from 'react-native'
 import api from '../../services/api.js'
 
 export default class SingUp extends React.Component {
@@ -14,6 +14,7 @@ export default class SingUp extends React.Component {
         },
     };
 
+    
     constructor(props) {
         super(props);
         state = {
